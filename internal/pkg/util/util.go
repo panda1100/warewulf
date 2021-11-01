@@ -22,14 +22,20 @@ import (
 func DirModTime(path string) (time.Time, error) {
 
 	var lastTime time.Time
+
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		cur := info.ModTime()
+		fstat, err := os.Stat(path)
+		if err != nil {
+			return nil
+		}
+		stat_t := fstat.Sys().(*syscall.Stat_t)
+		cur := time.Unix(int64(stat_t.Ctim.Sec), int64(stat_t.Ctim.Nsec)).UTC()
 		if cur.After(lastTime) {
-			lastTime = info.ModTime()
+			lastTime = time.Unix(int64(stat_t.Ctim.Sec), int64(stat_t.Ctim.Nsec)).UTC()
 		}
 
 		return nil
